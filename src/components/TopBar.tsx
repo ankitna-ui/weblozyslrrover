@@ -1,4 +1,4 @@
-import { ArrowLeftRight, Download, Menu, Share2, Shield, User } from 'lucide-react';
+import { ArrowLeftRight, Download, Menu, Share2, User } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import { useAuth } from '@/context/AuthContext';
 import { Link } from 'react-router-dom';
@@ -11,14 +11,21 @@ export default function TopBar() {
       style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border-color)' }}>
       {/* Brand */}
       <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded bg-[var(--primary-cyan)] flex items-center justify-center">
-          <Shield className="text-white w-4 h-4" />
+        <div className="w-8 h-8 rounded bg-white flex items-center justify-center overflow-hidden border border-[var(--border-color)]">
+          <img
+            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRvVujcaztP-Ta_XV1QUQF5n0nU_2sy_-MyLA&s"
+            alt="Weblozy Logo"
+            className="w-full h-full object-cover"
+          />
         </div>
         <div>
-          <h1 className="font-display font-semibold text-sm leading-tight hidden sm:block"
-            style={{ color: 'var(--text-primary)', letterSpacing: '0.02em' }}>
-            TELANGANA S&LR
-          </h1>
+          <div className="flex items-center gap-1.5">
+            <h1 className="font-display font-semibold text-sm leading-tight hidden sm:block"
+              style={{ color: 'var(--text-primary)', letterSpacing: '0.02em' }}>
+              TELANGANA S&LR
+            </h1>
+            <span className="bg-black text-white text-[9px] px-1.5 py-0.5 rounded-sm font-mono-data font-bold hidden sm:inline-block">WEBLOZY</span>
+          </div>
           <p className="font-mono-data text-[10px] uppercase hidden sm:block"
             style={{ color: 'var(--text-muted)', letterSpacing: '0.06em' }}>
             Pts Rover Protocol

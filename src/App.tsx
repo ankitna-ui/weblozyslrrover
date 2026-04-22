@@ -72,6 +72,9 @@ export default function App() {
         <AuthProvider>
           <AuthGate>
             <>
+              <div className="watermark-container no-print">
+                <div className="watermark-text">WEBLOZY</div>
+              </div>
               <TopBar />
               <TopProgressBar />
               <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 fill-mode-both" style={{ paddingTop: '14px' }}>

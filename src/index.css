@@ -279,3 +279,31 @@
   font-family: 'Space Mono', monospace !important;
   font-size: 11px !important;
 }
+
+/* Global Watermark */
+.watermark-container {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  overflow: hidden;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.05;
+}
+
+.watermark-text {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 8vw;
+  color: var(--text-primary);
+  transform: rotate(-25deg);
+  white-space: nowrap;
+  mix-blend-mode: overlay;
+}
+
+.dark .watermark-container {
+  opacity: 0.1;
+}
