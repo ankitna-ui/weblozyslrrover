@@ -10,10 +10,15 @@ import FullScreenLoader from '@/components/loaders/FullScreenLoader';
 import TopProgressBar from '@/components/loaders/TopProgressBar';
 import SkeletonDashboard from '@/components/loaders/SkeletonDashboard';
 
+// Auth Layer
+import { AuthProvider } from '@/context/AuthContext';
+import AuthGate from '@/components/AuthGate';
+
 const StateOverview = React.lazy(() => import('@/pages/StateOverview'));
 const DistrictDetail = React.lazy(() => import('@/pages/DistrictDetail'));
 const RoverDetail = React.lazy(() => import('@/pages/RoverDetail'));
 const PerformanceDashboard = React.lazy(() => import('@/pages/PerformanceDashboard'));
+const Workspace = React.lazy(() => import('@/pages/Workspace'));
 
 export default function App() {
   const { isValidated, error, isLocked, validate, attempts } = useLicence();
@@ -64,22 +69,27 @@ export default function App() {
       )}
 
       {isAppReady && isValidated && (
-        <>
-          <TopBar />
-          <TopProgressBar />
-          <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 fill-mode-both">
-            <Suspense fallback={<SkeletonDashboard />}>
-              <Routes>
-                <Route path="/" element={<StateOverview />} />
-                <Route path="/district/:districtId" element={<DistrictDetail />} />
-                <Route path="/rover/:roverId" element={<RoverDetail />} />
-                <Route path="/performance" element={<PerformanceDashboard />} />
-              </Routes>
-            </Suspense>
-          </div>
-          <Toaster position="bottom-right" richColors />
-          <AlertManager />
-        </>
+        <AuthProvider>
+          <AuthGate>
+            <>
+              <TopBar />
+              <TopProgressBar />
+              <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 fill-mode-both" style={{ paddingTop: '14px' }}>
+                <Suspense fallback={<SkeletonDashboard />}>
+                  <Routes>
+                    <Route path="/" element={<StateOverview />} />
+                    <Route path="/district/:districtId" element={<DistrictDetail />} />
+                    <Route path="/rover/:roverId" element={<RoverDetail />} />
+                    <Route path="/performance" element={<PerformanceDashboard />} />
+                    <Route path="/workspace" element={<Workspace />} />
+                  </Routes>
+                </Suspense>
+              </div>
+              <Toaster position="bottom-right" richColors />
+              <AlertManager />
+            </>
+          </AuthGate>
+        </AuthProvider>
       )}
     </div>
   );

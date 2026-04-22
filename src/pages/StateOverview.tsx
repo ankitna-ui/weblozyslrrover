@@ -125,7 +125,21 @@ export default function StateOverview() {
   const corsPercentage = ((connectedDistricts / districts.length) * 100).toFixed(1);
 
   const districtSummaries = useMemo(() => {
-    return districts.map(d => {
+    const multiZoneMetrics = [
+      { multiZone: 1, zone: 2 }, { multiZone: 1, zone: 4 }, { multiZone: 1, zone: 4 },
+      { multiZone: 2, zone: 6 }, { multiZone: 1, zone: 2 }, { multiZone: 2, zone: 5 },
+      { multiZone: 1, zone: 1 }, { multiZone: 2, zone: 7 }, { multiZone: 1, zone: 3 },
+      { multiZone: 1, zone: 3 }, { multiZone: 1, zone: 4 }, { multiZone: 1, zone: 1 },
+      { multiZone: 1, zone: 4 }, { multiZone: 2, zone: 7 }, { multiZone: 1, zone: 1 },
+      { multiZone: 1, zone: 3 }, { multiZone: 2, zone: 6 }, { multiZone: 1, zone: 1 },
+      { multiZone: 2, zone: 7 }, { multiZone: 2, zone: 5 }, { multiZone: 2, zone: 7 },
+      { multiZone: 1, zone: 2 }, { multiZone: 1, zone: 2 }, { multiZone: 1, zone: 1 },
+      { multiZone: 1, zone: 3 }, { multiZone: 2, zone: 6 }, { multiZone: 2, zone: 6 },
+      { multiZone: 1, zone: 3 }, { multiZone: 2, zone: 5 }, { multiZone: 2, zone: 6 },
+      { multiZone: 2, zone: 7 }, { multiZone: 1, zone: 4 }, { multiZone: 2, zone: 5 }
+    ];
+
+    return districts.map((d, index) => {
       const rovers = allRovers.filter(r => r.districtId === d.id);
       const active = rovers.filter(r => r.status === 'online').length;
       const avgUtil = rovers.reduce((sum, r) => {
@@ -138,12 +152,16 @@ export default function StateOverview() {
       else if (d.corsStatus === 'degraded') status = 'degraded';
       else if (active / rovers.length < 0.7) status = 'degraded';
 
+      const metrics = multiZoneMetrics[index % multiZoneMetrics.length];
+
       return {
         district: d,
         totalRovers: rovers.length,
         activeRovers: active,
         avgUtilization: avgUtil,
         status,
+        multiZone: metrics.multiZone,
+        zone: metrics.zone
       };
     });
   }, []);
@@ -253,7 +271,7 @@ export default function StateOverview() {
               <table className="w-full">
                 <thead className="sticky top-0 z-10" style={{ backgroundColor: 'var(--surface)' }}>
                   <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
-                    {['DISTRICT', 'ROVERS', 'ACTIVE', 'UTILIZATION', 'STATUS'].map((h) => (
+                    {['MULTI ZONE', 'ZONE', 'DISTRICT', 'ROVERS', 'ACTIVE', 'UTILIZATION', 'STATUS'].map((h) => (
                       <th key={h} className="font-mono-data font-medium text-xs uppercase p-3 text-left"
                         style={{ color: 'var(--text-muted)', letterSpacing: '0.08em' }}>
                         {h}
@@ -271,6 +289,12 @@ export default function StateOverview() {
                       onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
                       onClick={() => navigate(`/district/${summary.district.id}`)}
                     >
+                      <td className="p-3 text-sm text-center font-mono-data" style={{ color: 'var(--text-secondary)' }}>
+                        {summary.multiZone}
+                      </td>
+                      <td className="p-3 text-sm text-center font-mono-data" style={{ color: 'var(--text-secondary)' }}>
+                        {summary.zone}
+                      </td>
                       <td className="p-3 text-sm" style={{ color: 'var(--text-primary)' }}>
                         {summary.district.name}
                       </td>
