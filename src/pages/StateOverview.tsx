@@ -9,7 +9,8 @@ import DistrictMap from '@/components/DistrictMap';
 import UtilizationBar from '@/components/UtilizationBar';
 import StatusDot from '@/components/StatusDot';
 import ReadOnlyBadge from '@/components/ReadOnlyBadge';
-import { AlertTriangle, AlertCircle, ChevronRight } from 'lucide-react';
+import { AlertTriangle, AlertCircle, ChevronRight, ShieldCheck, ShieldAlert, Shield } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 const ParticleBackground = React.lazy(() => import('@/components/3d/ParticleBackground'));
 const Globe = React.lazy(() => import('@/components/3d/Globe'));
@@ -24,8 +25,23 @@ export default function StateOverview() {
   const tableRef = useRef<HTMLDivElement>(null);
   const alertsRef = useRef<HTMLDivElement>(null);
 
+  const { userRole, assignedMultiZone, assignedZone, assignedDistrict } = useAuth();
+
+  const filteredDistricts = useMemo(() => {
+    if (!userRole) return districts; // Super Admin
+    if (userRole === 'LEVEL1' && assignedMultiZone) return districts.filter(d => d.multiZone === assignedMultiZone);
+    if (userRole === 'LEVEL2' && assignedZone) return districts.filter(d => d.zone === assignedZone);
+    if (userRole === 'LEVEL3' && assignedDistrict) return districts.filter(d => d.id === assignedDistrict);
+    return districts;
+  }, [userRole, assignedMultiZone, assignedZone, assignedDistrict]);
+
+  const filteredRovers = useMemo(() => {
+    const districtIds = new Set(filteredDistricts.map(d => d.id));
+    return allRovers.filter(r => districtIds.has(r.districtId));
+  }, [filteredDistricts]);
+
   const [activeCount, setActiveCount] = useState(() =>
-    allRovers.filter(r => r.status === 'online').length
+    filteredRovers.filter(r => r.status === 'online').length
   );
   const [alertFilter, setAlertFilter] = useState<'all' | 'critical' | 'warning'>('all');
 
@@ -111,36 +127,28 @@ export default function StateOverview() {
     const interval = setInterval(() => {
       setActiveCount(prev => {
         const change = Math.random() > 0.5 ? 1 : -1;
-        return Math.max(320, Math.min(380, prev + change));
+        return Math.max(Math.floor(filteredRovers.length * 0.7), Math.min(filteredRovers.length, prev + change));
       });
     }, 8000);
     return () => clearInterval(interval);
-  }, []);
+  }, [filteredRovers]);
 
-  const totalRovers = allRovers.length;
+  const totalRovers = filteredRovers.length;
   const inactiveCount = totalRovers - activeCount;
-  const lowBatteryCount = allRovers.filter(r => r.battery < 20).length;
-  const outsideAlerts = allAlerts.filter(a => a.message.includes('outside')).length;
-  const connectedDistricts = districts.filter(d => d.corsStatus === 'connected').length;
-  const corsPercentage = ((connectedDistricts / districts.length) * 100).toFixed(1);
+  const lowBatteryCount = filteredRovers.filter(r => r.battery < 20).length;
+  
+  const relevantAlerts = useMemo(() => {
+    const districtIds = new Set(filteredDistricts.map(d => d.id));
+    return allAlerts.filter(a => districtIds.has(a.districtId));
+  }, [filteredDistricts]);
+
+  const outsideAlerts = relevantAlerts.filter(a => a.message.includes('outside')).length;
+  const connectedDistricts = filteredDistricts.filter(d => d.corsStatus === 'connected').length;
+  const corsPercentage = ((connectedDistricts / (filteredDistricts.length || 1)) * 100).toFixed(1);
 
   const districtSummaries = useMemo(() => {
-    const multiZoneMetrics = [
-      { multiZone: 1, zone: 2 }, { multiZone: 1, zone: 4 }, { multiZone: 1, zone: 4 },
-      { multiZone: 2, zone: 6 }, { multiZone: 1, zone: 2 }, { multiZone: 2, zone: 5 },
-      { multiZone: 1, zone: 1 }, { multiZone: 2, zone: 7 }, { multiZone: 1, zone: 3 },
-      { multiZone: 1, zone: 3 }, { multiZone: 1, zone: 4 }, { multiZone: 1, zone: 1 },
-      { multiZone: 1, zone: 4 }, { multiZone: 2, zone: 7 }, { multiZone: 1, zone: 1 },
-      { multiZone: 1, zone: 3 }, { multiZone: 2, zone: 6 }, { multiZone: 1, zone: 1 },
-      { multiZone: 2, zone: 7 }, { multiZone: 2, zone: 5 }, { multiZone: 2, zone: 7 },
-      { multiZone: 1, zone: 2 }, { multiZone: 1, zone: 2 }, { multiZone: 1, zone: 1 },
-      { multiZone: 1, zone: 3 }, { multiZone: 2, zone: 6 }, { multiZone: 2, zone: 6 },
-      { multiZone: 1, zone: 3 }, { multiZone: 2, zone: 5 }, { multiZone: 2, zone: 6 },
-      { multiZone: 2, zone: 7 }, { multiZone: 1, zone: 4 }, { multiZone: 2, zone: 5 }
-    ];
-
-    return districts.map((d, index) => {
-      const rovers = allRovers.filter(r => r.districtId === d.id);
+    return filteredDistricts.map((d) => {
+      const rovers = filteredRovers.filter(r => r.districtId === d.id);
       const active = rovers.filter(r => r.status === 'online').length;
       const avgUtil = rovers.reduce((sum, r) => {
         const avg = r.workingHours.reduce((a, b) => a + b, 0) / r.workingHours.length;
@@ -150,9 +158,7 @@ export default function StateOverview() {
       let status: 'online' | 'offline' | 'degraded' = 'online';
       if (d.corsStatus === 'disconnected') status = 'offline';
       else if (d.corsStatus === 'degraded') status = 'degraded';
-      else if (active / rovers.length < 0.7) status = 'degraded';
-
-      const metrics = multiZoneMetrics[index % multiZoneMetrics.length];
+      else if (active / (rovers.length || 1) < 0.7) status = 'degraded';
 
       return {
         district: d,
@@ -160,16 +166,16 @@ export default function StateOverview() {
         activeRovers: active,
         avgUtilization: avgUtil,
         status,
-        multiZone: metrics.multiZone,
-        zone: metrics.zone
+        multiZone: d.multiZone,
+        zone: d.zone
       };
     });
-  }, []);
+  }, [filteredDistricts, filteredRovers]);
 
   const filteredAlerts = useMemo(() => {
-    if (alertFilter === 'all') return allAlerts.slice(0, 8);
-    return allAlerts.filter(a => a.type === alertFilter).slice(0, 8);
-  }, [alertFilter]);
+    if (alertFilter === 'all') return relevantAlerts.slice(0, 8);
+    return relevantAlerts.filter(a => a.type === alertFilter).slice(0, 8);
+  }, [alertFilter, relevantAlerts]);
 
   const splitText = (text: string, className: string) => {
     return text.split('').map((char, i) => (
@@ -204,15 +210,18 @@ export default function StateOverview() {
         </h1>
 
         <div ref={chipsRef} className="flex flex-wrap gap-2 mt-4">
-          <span className="font-mono-data text-xs px-3 py-1.5 card-surface" style={{ color: 'var(--text-secondary)', letterSpacing: '0.04em' }}>
-            411 ROVERS
+          <span className="font-mono-data text-xs px-3 py-1.5 card-surface flex items-center gap-2" style={{ color: 'var(--primary-cyan)', letterSpacing: '0.04em' }}>
+            {userRole === 'LEVEL1' ? <ShieldCheck className="w-3.5 h-3.5" /> : userRole === 'LEVEL2' ? <Shield className="w-3.5 h-3.5" /> : userRole === 'LEVEL3' ? <ShieldAlert className="w-3.5 h-3.5" /> : null}
+            {userRole === 'LEVEL1' ? `MZ ${assignedMultiZone} ACCESS` : 
+             userRole === 'LEVEL2' ? `ZONE ${assignedZone} ACCESS` : 
+             userRole === 'LEVEL3' ? `${assignedDistrict?.toUpperCase()} ACCESS` : 
+             'STATE ADMIN ACCESS'}
           </span>
           <span className="font-mono-data text-xs px-3 py-1.5 card-surface" style={{ color: 'var(--text-secondary)', letterSpacing: '0.04em' }}>
-            34 DISTRICTS
+            {totalRovers} ACTIVE ROVERS
           </span>
-          <span className="font-mono-data text-xs px-3 py-1.5 card-surface flex items-center gap-2" style={{ color: 'var(--success)', letterSpacing: '0.04em' }}>
-            <span className="w-1.5 h-1.5 rounded-full pulse-dot" style={{ backgroundColor: 'var(--success)' }} />
-            LIVE TRACKING
+          <span className="font-mono-data text-xs px-3 py-1.5 card-surface" style={{ color: 'var(--text-secondary)', letterSpacing: '0.04em' }}>
+            {filteredDistricts.length} DISTRICTS
           </span>
         </div>
       </div>
@@ -252,7 +261,7 @@ export default function StateOverview() {
             </div>
             <div className="hidden lg:block h-full">
               <Suspense fallback={<div className="flex items-center justify-center h-full"><span className="pulse-dot w-4 h-4 rounded-full bg-primary-cyan"></span></div>}>
-                <Globe />
+                <Globe filteredDistricts={filteredDistricts} />
               </Suspense>
             </div>
           </div>

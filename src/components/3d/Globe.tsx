@@ -1,10 +1,12 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { districts } from '@/data/districts';
+import { districts as allDistricts } from '@/data/districts';
+import type { District } from '@/data/types';
 
-export default function Globe() {
+export default function Globe({ filteredDistricts }: { filteredDistricts?: District[] }) {
     const mountRef = useRef<HTMLDivElement>(null);
     const navigate = useNavigate();
+    const activeDistricts = filteredDistricts || allDistricts;
 
     useEffect(() => {
         let frameId: number;
@@ -37,9 +39,9 @@ export default function Globe() {
             scene.add(globe);
 
             // Add district markers (dummy positions for now)
-            districts.forEach((d, i) => {
-                const phi = Math.acos(-1 + (2 * i) / districts.length);
-                const theta = Math.sqrt(districts.length * Math.PI) * phi;
+            activeDistricts.forEach((d, i) => {
+                const phi = Math.acos(-1 + (2 * i) / activeDistricts.length);
+                const theta = Math.sqrt(activeDistricts.length * Math.PI) * phi;
                 const x = 3.1 * Math.cos(theta) * Math.sin(phi);
                 const y = 3.1 * Math.sin(theta) * Math.sin(phi);
                 const z = 3.1 * Math.cos(phi);
@@ -80,7 +82,7 @@ export default function Globe() {
             }
             if (renderer) renderer.dispose();
         };
-    }, [navigate]);
+    }, [navigate, activeDistricts]);
 
     return (
         <div className="relative w-full h-full flex flex-col items-center justify-center">

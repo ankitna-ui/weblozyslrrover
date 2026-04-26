@@ -5,6 +5,8 @@ export interface District {
   roverCount: number;
   centroid: [number, number]; // [lat, lng]
   corsStatus: 'connected' | 'disconnected' | 'degraded';
+  multiZone: number;
+  zone: number;
 }
 
 export interface Rover {

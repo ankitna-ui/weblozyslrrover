@@ -1,5 +1,5 @@
 import { useAuth } from '@/context/AuthContext';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { FormEvent } from 'react';
 import { Lock, Crosshair } from 'lucide-react';
 import ButtonSpinner from '@/components/loaders/ButtonSpinner';
@@ -7,13 +7,20 @@ import { useNavigate } from 'react-router-dom';
 import { allRovers } from '@/data/rovers';
 
 export default function AuthGate({ children }: { children: React.ReactNode }) {
-    const { isLoggedIn, login, selectRover, showModal, setShowModal } = useAuth();
+    const { isLoggedIn, userRole, login, selectRover, showModal, setShowModal } = useAuth();
     const navigate = useNavigate();
+
+    useEffect(() => {
+        if (isLoggedIn && userRole) {
+            setShowModal(false);
+        }
+    }, [isLoggedIn, userRole, setShowModal]);
 
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [err, setErr] = useState('');
     const [loading, setLoading] = useState(false);
+    const [mode, setMode] = useState<'system' | 'admin'>('system');
 
     const [roverInput, setRoverInput] = useState('');
     const [rErr, setRErr] = useState('');
@@ -26,7 +33,14 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
         }
         setLoading(true);
         setTimeout(() => {
-            login(username, password);
+            const success = login(username, password);
+            if (success) {
+                // If it's one of the admin levels, close modal immediately
+                if (username.toLowerCase().includes('admin') && username.toLowerCase() !== 'admin') {
+                    setShowModal(false);
+                    navigate('/');
+                }
+            }
             setLoading(false);
         }, 800);
     };
@@ -61,15 +75,53 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
                         {!isLoggedIn ? (
                             /* Login Modal */
                             <div className="w-full card-surface p-8 shadow-2xl relative overflow-hidden flex flex-col items-center">
-                                <div className="w-16 h-16 rounded-full bg-[var(--primary-cyan)]/20 flex items-center justify-center mb-6">
-                                    <Lock className="w-8 h-8 text-[var(--primary-cyan)]" />
+                                <div className="flex w-full mb-8 bg-[var(--void)] p-1 rounded border border-[var(--border-color)]">
+                                    <button
+                                        onClick={() => setMode('system')}
+                                        className={`flex-1 py-2 text-[10px] font-mono-data font-bold rounded transition-all ${
+                                            mode === 'system' ? 'bg-[var(--primary-cyan)] text-white' : 'text-[var(--text-muted)]'
+                                        }`}
+                                    >
+                                        SYSTEM ACCESS
+                                    </button>
+                                    <button
+                                        onClick={() => setMode('admin')}
+                                        className={`flex-1 py-2 text-[10px] font-mono-data font-bold rounded transition-all ${
+                                            mode === 'admin' ? 'bg-[var(--danger)] text-white' : 'text-[var(--text-muted)]'
+                                        }`}
+                                    >
+                                        ADMIN LOGIN
+                                    </button>
                                 </div>
-                                <h2 className="font-display text-2xl font-semibold mb-2 text-[var(--text-primary)]">System Access</h2>
-                                <p className="text-sm text-[var(--text-secondary)] text-center mb-8 font-mono-data tracking-wide">
-                                    AUTHENTICATION REQUIRED
+
+                                <div className="w-16 h-16 rounded-full flex items-center justify-center mb-6" style={{ backgroundColor: mode === 'system' ? 'var(--primary-cyan-dim)' : 'var(--danger-dim)' }}>
+                                    <Lock className="w-8 h-8" style={{ color: mode === 'system' ? 'var(--primary-cyan)' : 'var(--danger)' }} />
+                                </div>
+                                <h2 className="font-display text-2xl font-semibold mb-2 text-[var(--text-primary)]">
+                                    {mode === 'system' ? 'System Access' : 'Admin Login'}
+                                </h2>
+                                <p className="text-sm text-[var(--text-secondary)] text-center mb-8 font-mono-data tracking-wide uppercase">
+                                    {mode === 'system' ? 'Authentication Required' : 'Master Credentials Required'}
                                 </p>
 
                                 <form onSubmit={handleLogin} className="w-full space-y-4">
+                                    {mode === 'admin' && (
+                                        <div className="flex gap-2 mb-4">
+                                            {(['L1', 'L2', 'L3'] as const).map((lvl) => (
+                                                <button
+                                                    key={lvl}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setUsername(`${lvl}admin`);
+                                                        setPassword(`${lvl}admin`);
+                                                    }}
+                                                    className="flex-1 py-2 text-[10px] font-mono-data font-bold rounded border border-[var(--danger)]/30 text-[var(--danger)] hover:bg-[var(--danger)] hover:text-white transition-all"
+                                                >
+                                                    {lvl}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
                                     <div>
                                         <input
                                             type="text"
@@ -93,10 +145,11 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
                                     <button
                                         type="submit"
                                         disabled={loading}
-                                        className="w-full py-3 mt-4 flex items-center justify-center gap-2 rounded bg-[var(--primary-cyan)] text-white font-mono-data font-bold tracking-wider hover:bg-[var(--primary-cyan)]/90 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+                                        className="w-full py-3 mt-4 flex items-center justify-center gap-2 rounded text-white font-mono-data font-bold tracking-wider transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+                                        style={{ backgroundColor: mode === 'system' ? 'var(--primary-cyan)' : 'var(--danger)' }}
                                     >
                                         {loading && <ButtonSpinner size="h-4 w-4" color="text-white" />}
-                                        {loading ? 'AUTHENTICATING...' : 'LOGIN'}
+                                        {loading ? 'AUTHENTICATING...' : mode === 'system' ? 'LOGIN' : 'AUTHORIZE'}
                                     </button>
                                 </form>
                             </div>

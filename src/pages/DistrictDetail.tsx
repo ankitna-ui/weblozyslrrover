@@ -9,7 +9,8 @@ import BatteryBar from '@/components/BatteryBar';
 import UtilizationBar from '@/components/UtilizationBar';
 import UtilizationChart from '@/components/UtilizationChart';
 import ReadOnlyBadge from '@/components/ReadOnlyBadge';
-import { ChevronRight, AlertTriangle, AlertCircle, Printer, Play, Pause, Search } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { ChevronRight, AlertTriangle, AlertCircle, Printer, Play, Pause, Search, ShieldX } from 'lucide-react';
 
 export default function DistrictDetail() {
   const { districtId } = useParams<{ districtId: string }>();
@@ -53,15 +54,31 @@ export default function DistrictDetail() {
     });
   }, [rovers, statusFilter, batteryFilter, searchQuery]);
 
-  if (!district) {
+  const { userRole, assignedMultiZone, assignedZone, assignedDistrict } = useAuth();
+
+  const isAccessDenied = useMemo(() => {
+    if (!district || !userRole) return false;
+    if (userRole === 'LEVEL1') return district.multiZone !== assignedMultiZone;
+    if (userRole === 'LEVEL2') return district.zone !== assignedZone;
+    if (userRole === 'LEVEL3') return district.id !== assignedDistrict;
+    return false;
+  }, [district, userRole, assignedMultiZone, assignedZone, assignedDistrict]);
+
+  if (!district || isAccessDenied) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--void)', paddingTop: '48px' }}>
-        <div className="text-center">
+        <div className="text-center p-8 card-surface max-w-sm">
+          <ShieldX className="w-12 h-12 mx-auto mb-4" style={{ color: 'var(--danger)' }} />
           <h2 className="font-display font-semibold text-xl mb-2" style={{ color: 'var(--text-primary)' }}>
-            District Not Found
+            {isAccessDenied ? 'Access Denied' : 'District Not Found'}
           </h2>
-          <Link to="/" className="text-sm" style={{ color: 'var(--primary-cyan)' }}>
-            &larr; Back to State Overview
+          <p className="text-sm text-[var(--text-secondary)] mb-6">
+            {isAccessDenied 
+              ? "You don't have permission to view this district's data."
+              : "The district you are looking for does not exist."}
+          </p>
+          <Link to="/" className="text-sm px-4 py-2 rounded border border-[var(--primary-cyan)] inline-block" style={{ color: 'var(--primary-cyan)' }}>
+            &larr; Back to Dashboard
           </Link>
         </div>
       </div>

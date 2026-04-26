@@ -4,7 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Link } from 'react-router-dom';
 
 export default function TopBar() {
-  const { isLoggedIn, roverId, setShowModal, logout } = useAuth();
+  const { isLoggedIn, userRole, assignedMultiZone, assignedZone, assignedDistrict, roverId, setShowModal, logout } = useAuth();
 
   return (
     <div className="fixed top-0 left-0 right-0 h-14 z-40 px-4 lg:px-8 border-b transition-colors flex items-center justify-between no-print"
@@ -70,16 +70,29 @@ export default function TopBar() {
             Login
           </button>
         ) : (
-          <button
-            onClick={() => {
-              logout();
-              window.location.href = '/';
-            }}
-            className="flex items-center gap-2 px-3 py-1.5 rounded font-mono-data text-xs font-medium uppercase tracking-wider transition-colors hover:bg-red-500/10"
-            style={{ border: '1px solid var(--danger)', color: 'var(--danger)', backgroundColor: 'transparent' }}
-          >
-            Logout
-          </button>
+          <div className="flex items-center gap-3">
+            <div className="flex flex-col items-end mr-2">
+              <span className="font-mono-data text-[10px] font-bold" style={{ color: 'var(--primary-cyan)' }}>
+                {userRole === 'LEVEL1' ? 'L1 HOD' : userRole === 'LEVEL2' ? 'L2 HOD' : userRole === 'LEVEL3' ? 'L3 HOD' : 'ADMIN'}
+              </span>
+              <span className="font-mono-data text-[8px] uppercase opacity-60" style={{ color: 'var(--text-primary)' }}>
+                {userRole === 'LEVEL1' ? `MZ ${assignedMultiZone}` : 
+                 userRole === 'LEVEL2' ? `ZONE ${assignedZone}` : 
+                 userRole === 'LEVEL3' ? assignedDistrict : 
+                 'STATE ACCESS'}
+              </span>
+            </div>
+            <button
+              onClick={() => {
+                logout();
+                window.location.href = '/';
+              }}
+              className="flex items-center gap-2 px-3 py-1.5 rounded font-mono-data text-xs font-medium uppercase tracking-wider transition-colors hover:bg-red-500/10"
+              style={{ border: '1px solid var(--danger)', color: 'var(--danger)', backgroundColor: 'transparent' }}
+            >
+              Logout
+            </button>
+          </div>
         )}
 
         <ThemeToggle />
