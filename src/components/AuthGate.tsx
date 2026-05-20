@@ -5,6 +5,7 @@ import { Lock, Crosshair } from 'lucide-react';
 import ButtonSpinner from '@/components/loaders/ButtonSpinner';
 import { useNavigate } from 'react-router-dom';
 import { allRovers } from '@/data/rovers';
+import partnerLogo from '@/assest/partner.png';
 
 export default function AuthGate({ children }: { children: React.ReactNode }) {
     const { isLoggedIn, userRole, login, selectRover, showModal, setShowModal } = useAuth();
@@ -75,6 +76,9 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
                         {!isLoggedIn ? (
                             /* Login Modal */
                             <div className="w-full card-surface p-8 shadow-2xl relative overflow-hidden flex flex-col items-center">
+                                <div className="mb-8 w-full flex justify-center">
+                                    <img src={partnerLogo} alt="Partners" className="h-12 w-auto object-contain max-w-[280px]" />
+                                </div>
                                 <div className="flex w-full mb-8 bg-[var(--void)] p-1 rounded border border-[var(--border-color)]">
                                     <button
                                         onClick={() => setMode('system')}

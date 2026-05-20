@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Lock, AlertTriangle } from 'lucide-react';
 import gsap from 'gsap';
+import partnerLogo from '@/assest/partner.png';
 
 interface LicenceGateProps {
   onValidate: (key: string) => boolean;
@@ -54,6 +55,10 @@ export default function LicenceGate({ onValidate, error, isLocked, attempts }: L
           transition: shake ? 'transform 0.1s ease' : undefined,
         }}
       >
+        <div className="flex justify-center mb-6">
+          <img src={partnerLogo} alt="Partners Logo" className="h-14 w-auto object-contain max-w-[280px]" />
+        </div>
+
         <div className="flex justify-center mb-6">
           <Lock className="w-12 h-12" style={{ color: 'var(--primary-cyan)' }} />
         </div>

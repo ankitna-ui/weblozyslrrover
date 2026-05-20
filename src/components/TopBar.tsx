@@ -2,6 +2,7 @@ import { ArrowLeftRight, Download, Menu, Share2, User } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import { useAuth } from '@/context/AuthContext';
 import { Link } from 'react-router-dom';
+import partnerLogo from '@/assest/partner.png';
 
 export default function TopBar() {
   const { isLoggedIn, userRole, assignedMultiZone, assignedZone, assignedDistrict, roverId, setShowModal, logout } = useAuth();
@@ -11,11 +12,11 @@ export default function TopBar() {
       style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border-color)' }}>
       {/* Brand */}
       <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded bg-white flex items-center justify-center overflow-hidden border border-[var(--border-color)]">
+        <div className="h-10 flex items-center justify-center">
           <img
-            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRvVujcaztP-Ta_XV1QUQF5n0nU_2sy_-MyLA&s"
-            alt="Weblozy Logo"
-            className="w-full h-full object-cover"
+            src={partnerLogo}
+            alt="Partners Logo"
+            className="h-full w-auto object-contain max-w-[280px]"
           />
         </div>
         <div>
